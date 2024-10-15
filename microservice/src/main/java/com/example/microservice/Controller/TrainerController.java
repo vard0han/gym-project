@@ -6,14 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jms.annotation.JmsListener;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/trainers")
+@Component
 public class TrainerController {
 
     @Autowired
@@ -21,14 +22,15 @@ public class TrainerController {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainerController.class);
 
-    @PostMapping("/workload")
-    public ResponseEntity<String> updateTrainerWorkload(@RequestBody TrainerWorkloadRequest request) {
+    @JmsListener(destination = "trainerWorkloadQueue")
+    public void updateTrainerWorkload(@RequestBody TrainerWorkloadRequest request) {
         logger.info("Received request to update workload for trainer: {}", request.getUsername());
 
-        trainerService.updateTrainerWorkload(request);
-
-        logger.info("Workload updated successfully for trainer: {}", request.getUsername());
-
-        return ResponseEntity.ok("Workload updated");
+        try {
+            trainerService.updateTrainerWorkload(request);
+            logger.info("Workload updated successfully for trainer: {}", request.getUsername());
+        } catch (Exception e) {
+            logger.error("Error occurred while updating trainer workload: " + e.getMessage());
+        }
     }
 }

@@ -20,12 +20,10 @@ public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
     @CircuitBreaker(name = "trainerServiceCircuitBreaker", fallbackMethod = "fallbackUpdateTrainerWorkload")
     public void updateTrainerWorkload(TrainerWorkloadRequest request) {
-        Trainer trainer = trainerRepository.findByUsername(request.getUsername()).
-                orElse(new Trainer(request.getUsername(), request.getFirstName(), request.getLastName(), request.isActive()));
+        Trainer trainer = trainerRepository.findByUsername(request.getUsername())
+                .orElse(new Trainer(request.getUsername(), request.getFirstName(), request.getLastName(), request.isActive()));
         YearMonth yearMonth = YearMonth.from(request.getTrainingDate());
-        Duration duration = request.getTrainingDuration();
-
-        long hours = duration.toHours();
+        long hours = request.getTrainingDuration().toHours();
 
         trainer.updateTrainingDuration(yearMonth, hours, request.getActionType());
         trainerRepository.save(trainer);
